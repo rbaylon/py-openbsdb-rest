@@ -13,7 +13,14 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
-import re
+import re, os, netifaces, json
+from socket import gethostname
+
+AF = {
+    netifaces.AF_INET : 'inet',
+    netifaces.AF_INET6 : 'inet6',
+    netifaces.AF_LINK : 'mac'
+}
 
 class Validator(object):
     def is_username_valid(self, username):
@@ -33,3 +40,30 @@ class Validator(object):
             return True
         else:
             return False
+
+class CfgManager(object):
+    def __init__(self, cfg):
+        if os.path.isfile(cfg):
+            with open(cfg, "r") as rfile:
+                self.cfg = json.load(rfile)
+
+        else:
+            newcfg = {}
+            ifaces = {}
+            for i in netifaces.interfaces():
+                ifaces[i] = netifaces.ifaddresses(i)
+
+            newcfg['interfaces'] = ifaces
+            newcfg['hostname'] = gethostname()
+            with open(cfg, "w") as wfile:
+                json.dump(newcfg, wfile)
+
+            with open(cfg, "r") as rfile:
+                self.cfg = json.load(rfile)
+
+    def gethostname(self):
+        return self.cfg['hostname']
+
+    def getinterfaces(self):
+        return self.cfg['interfaces']
+

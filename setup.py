@@ -25,11 +25,8 @@ setup(
     packages=["openbsdrest", "Utils"],
     include_package_data=True,
     install_requires=[
-        "flask-login",
         "ipaddress",
         "Flask",
-        "Flask-RESTful",
-        "Flask-Script",
         "PyJWT",
         "py-bsdauth"
     ],

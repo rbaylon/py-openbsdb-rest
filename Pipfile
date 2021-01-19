@@ -4,15 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-flask-login = "*"
 ipaddress = "*"
 Flask = "*"
-Flask-RESTful = "*"
-Flask-Script = "*"
 PyJWT = "*"
 py-bsdauth = "*"
-twisted = "*"
 py-openbsd-rest = {editable = true, path = "."}
+netifaces = "*"
 
 [dev-packages]
 

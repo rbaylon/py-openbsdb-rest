@@ -20,6 +20,8 @@ import datetime
 from functools import wraps
 from bsdauth.bsdauth import UserOkay
 from Utils.utils import Validator
+import netifaces
+from openbsdrest.controllers import InterfaceController, OsController
 
 v = Validator()
 
@@ -68,4 +70,34 @@ def apilogin():
 @app.route('/api', methods=['GET'])
 @token_required
 def home(current_user):
-    return jsonify({'Hello' : current_user})
+    osc = OsController()
+    return jsonify({'Hostname' : osc.gethostname()})
+
+@app.route('/api/interfaces', methods=['GET'])
+@token_required
+def interfaces(current_user):
+    ic = InterfaceController()
+    return jsonify({'interfaces' : ic.getinterfaces()})
+
+@app.route('/api/interfaces/<iface>', defaults={'af': 'all'}, methods=['GET'])
+@app.route('/api/interfaces/<iface>/<af>', methods=['GET', 'PUT', 'DELETE', 'POST'])
+@token_required
+def iface_addr(current_user, iface, af):
+    ic = InterfaceController()        
+    if af != 'all':
+        if af == 'inet':
+            af = netifaces.AF_INET
+        elif af == 'inet6':
+            af = netifaces.AF_INET6
+        elif af == 'mac':
+            af = netifaces.AF_LINK
+        else:
+            return jsonify({
+                'Error' : 'Invalid AF {}'.format(af),
+                'Valid Options' : 'inet, inet6, mac'
+            })
+
+        return jsonify(ic.getifaddresses(iface, af))
+    else:
+        return jsonify(ic.getifaddresses(iface))
+
