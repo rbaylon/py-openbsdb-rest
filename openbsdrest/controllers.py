@@ -25,7 +25,7 @@ def _build_error(e):
 
 class InterfaceController(object):
     def __init__(self):
-        self.ifaces = cfg.getinterfaces()
+        self.ifaces = cfg.cfg['interfaces']
 
     def getinterfaces(self):
         return self.ifaces
@@ -42,12 +42,33 @@ class InterfaceController(object):
             except:
                 return _build_error('Interface {} not found.'.format(iface))
 
-    def setifaddresses(self, iface, af):
-        pass
+    def addifaddr(self, iface, data, af):
+        cfg.cfg['interfaces'][iface][str(af)].append(data)
+        if not cfg.is_lock():
+            cfg.lock()
+            return cfg.save()
+        else:
+            return 'CONFIG LOCK'
+
+    def delifaddr(self, iface, data, af):
+        cfg.cfg['interfaces'][iface][str(af)].pop(data['index'])
+        if not cfg.is_lock():
+            cfg.lock()
+            return cfg.save()
+        else:
+            return 'CONFIG LOCK'
+
+    def modifaddr(self, iface, data, af):
+        cfg.cfg['interfaces'][iface][str(af)][data['index']] = data['value']
+        if not cfg.is_lock():
+            cfg.lock()
+            return cfg.save()
+        else:
+            return 'CONFIG LOCK'
 
 class OsController(object):
     def __init__(self):
-        self.hostname = cfg.gethostname()
+        self.hostname = cfg.cfg['hostname']
 
     def gethostname(self):
         return self.hostname

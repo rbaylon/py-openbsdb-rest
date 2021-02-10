@@ -19,7 +19,7 @@ import jwt
 import datetime
 from functools import wraps
 from bsdauth.bsdauth import UserOkay
-from Utils.utils import Validator
+from Utils.utils import Validator, AF
 import netifaces
 from openbsdrest.controllers import InterfaceController, OsController
 
@@ -83,7 +83,6 @@ def interfaces(current_user):
 @app.route('/api/interfaces/<iface>/<af>', methods=['GET', 'PUT', 'DELETE', 'POST'])
 @token_required
 def iface_addr(current_user, iface, af):
-    ic = InterfaceController()        
     if af != 'all':
         if af == 'inet':
             af = netifaces.AF_INET
@@ -97,7 +96,45 @@ def iface_addr(current_user, iface, af):
                 'Valid Options' : 'inet, inet6, mac'
             })
 
-        return jsonify(ic.getifaddresses(iface, af))
-    else:
-        return jsonify(ic.getifaddresses(iface))
+    ic = InterfaceController()
+    if request.method == 'POST':
+        if request.is_json:
+            data = request.get_json()
+        else:
+            return make_response('Error : Request must be application/json', 400)
 
+        ret = ic.addifaddr(iface, data, af)
+        if type(ret) != 'str':
+            return redirect(url_for('iface_addr', iface=iface, af=AF[af]))
+        else:
+            return make_response('Error : Failed to add address: {}'.format(ret), 400)
+
+    if request.method == 'DELETE':
+        if request.is_json:
+            data = request.get_json()
+        else:
+            return make_response('Error : Request must be application/json', 400)
+
+        ret = ic.delifaddr(iface, data, af)
+        if type(ret) != 'str':
+            return redirect(url_for('iface_addr', iface=iface, af=AF[af]))
+        else:
+            return make_response('Error : Failed to add address: {}'.format(ret), 400)
+
+    if request.method == 'PUT':
+        if request.is_json:
+            data = request.get_json()
+        else:
+            return make_response('Error : Request must be application/json', 400)
+
+        ret = ic.modifaddr(iface, data, af)
+        if type(ret) != 'str':
+            return redirect(url_for('iface_addr', iface=iface, af=AF[af]))
+        else:
+            return make_response('Error : Failed to add address: {}'.format(ret), 400)
+
+    # default to  processing GET method
+    if af == 'all':
+        return jsonify(ic.getifaddresses(iface))
+    else:
+        return jsonify(ic.getifaddresses(iface, af))

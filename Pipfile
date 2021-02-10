@@ -9,7 +9,6 @@ Flask = "*"
 PyJWT = "*"
 py-bsdauth = "*"
 py-openbsd-rest = {editable = true, path = "."}
-netifaces = "*"
 
 [dev-packages]
 

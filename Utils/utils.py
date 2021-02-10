@@ -13,7 +13,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
-import re, os, netifaces, json
+import re, os, netifaces, json, subprocess
 from socket import gethostname
 
 AF = {
@@ -21,6 +21,11 @@ AF = {
     netifaces.AF_INET6 : 'inet6',
     netifaces.AF_LINK : 'mac'
 }
+
+SIFS = [
+    'enc0',
+    'pflog0'
+]
 
 class Validator(object):
     def is_username_valid(self, username):
@@ -43,27 +48,65 @@ class Validator(object):
 
 class CfgManager(object):
     def __init__(self, cfg):
+        self.cfgfile = cfg
+        self.lockfile = '{}.lock'.format(cfg)
         if os.path.isfile(cfg):
             with open(cfg, "r") as rfile:
                 self.cfg = json.load(rfile)
 
         else:
+            #get working dir so that we can execute our shell script
+            wdir = os.path.dirname(__file__)
             newcfg = {}
             ifaces = {}
             for i in netifaces.interfaces():
+                if i in SIFS:
+                    continue
+
                 ifaces[i] = netifaces.ifaddresses(i)
+                try:
+                    j=0
+                    for ip in ifaces[i][netifaces.AF_INET]:
+                        addr = ip['addr']
+                        out = subprocess.Popen(['{}/sh/getNetmask.sh'.format(wdir), i, addr], 
+           		    stdout=subprocess.PIPE, 
+           		    stderr=subprocess.STDOUT)
+                        stdout,stderr = out.communicate()
+                        netmask = stdout.decode()
+                        ifaces[i][netifaces.AF_INET][j]['netmask'] = netmask
+                        j+=1
+
+                except Exception as e:
+                    print(e)
 
             newcfg['interfaces'] = ifaces
             newcfg['hostname'] = gethostname()
             with open(cfg, "w") as wfile:
-                json.dump(newcfg, wfile)
+                json.dump(newcfg, wfile, indent=4,sort_keys=True)
 
             with open(cfg, "r") as rfile:
                 self.cfg = json.load(rfile)
 
-    def gethostname(self):
-        return self.cfg['hostname']
+    def save(self):
+        try:
+            with open(self.lockfile, "r") as lockfile:
+                self.cfg = json.load(lockfile)
 
-    def getinterfaces(self):
-        return self.cfg['interfaces']
+            os.rename(self.cfgfile,'{}.old'.format(self.cfgfile))
+            os.rename(self.lockfile, self.cfgfile)
+            return True
+        except Exception as e:
+            return str(e)
 
+    def lock(self):
+        with open(self.lockfile, "w") as lockfile:
+            json.dump(self.cfg, lockfile, indent=4, sort_keys=True)
+
+    def unlock(self):
+        pass
+
+    def is_lock(self):
+        if os.path.isfile(self.lockfile):
+            return True
+        else:
+            return False
