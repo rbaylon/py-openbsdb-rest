@@ -13,14 +13,16 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
-from Utils.utils import CfgManager, AF
-from openbsdrest import app
+from models import CfgManager
+from views import app
+from Utils.variables import AF
 
 cfg = CfgManager(app.config['OPENBSD_CONFIG'])
 
 def _build_error(e):
     error = {}
     error['Error'] = e
+    error['Failed'] = True
     return error
 
 class InterfaceController(object):
@@ -65,6 +67,13 @@ class InterfaceController(object):
             return cfg.save()
         else:
             return 'CONFIG LOCK'
+
+    def getinterface(self, iface):
+        try:
+            return self.ifaces[iface]
+        except:
+            return _build_error('Interface {} not found.'.format(iface))
+        
 
 class OsController(object):
     def __init__(self):

@@ -1,4 +1,4 @@
-from openbsdrest import app
+from views import app
 
 def main():
     print(" * ** Warning this is running in debug mode. For production deployment refer to https://flask.palletsprojects.com/en/1.1.x/deploying/wsgi-standalone/#twisted-web .")

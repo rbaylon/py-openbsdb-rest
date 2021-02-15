@@ -13,9 +13,20 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
-from flask import Flask
 
-app = Flask(__name__)
-app.config.from_pyfile('config.cfg')
+import netifaces
 
-from openbsdrest import apiviews
+AF = {
+    netifaces.AF_INET : 'inet',
+    netifaces.AF_INET6 : 'inet6',
+    netifaces.AF_LINK : 'mac'
+}
+
+SIFS = [
+    'enc0',
+    'pflog0'
+]
+
+IP = {}
+IP['interface_keys'] = ['addr', 'netmask', 'af']
+

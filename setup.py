@@ -32,7 +32,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "openbsdrest=run:main",
+            "restd=restd:main",
         ]
     },
     platforms=["OpenBSD"]

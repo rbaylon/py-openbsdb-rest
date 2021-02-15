@@ -13,38 +13,10 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
-import re, os, netifaces, json, subprocess
+import os, netifaces, json, subprocess
 from socket import gethostname
+from Utils.variables import SIFS
 
-AF = {
-    netifaces.AF_INET : 'inet',
-    netifaces.AF_INET6 : 'inet6',
-    netifaces.AF_LINK : 'mac'
-}
-
-SIFS = [
-    'enc0',
-    'pflog0'
-]
-
-class Validator(object):
-    def is_username_valid(self, username):
-        """
-           Validate username based on OpenBSD's passwd(5) username specs.
-        """
-        if re.search('^[a-z]+[0-9|\-|_|a-z]+$', username) and len(username) <= 31:
-            return True
-        else:
-            return False
-
-    def is_password_valid(self, password):
-        """
-           Validate password based on OpenBSD's passwd(1) password specs.
-        """
-        if len(password) >= 6 and len(password) <= 128:
-            return True
-        else:
-            return False
 
 class CfgManager(object):
     def __init__(self, cfg):
@@ -68,12 +40,13 @@ class CfgManager(object):
                     j=0
                     for ip in ifaces[i][netifaces.AF_INET]:
                         addr = ip['addr']
-                        out = subprocess.Popen(['{}/sh/getNetmask.sh'.format(wdir), i, addr], 
+                        out = subprocess.Popen(['Utils/sh/getNetmask.sh', i, addr], 
            		    stdout=subprocess.PIPE, 
            		    stderr=subprocess.STDOUT)
                         stdout,stderr = out.communicate()
                         netmask = stdout.decode()
                         ifaces[i][netifaces.AF_INET][j]['netmask'] = netmask
+                        ifaces[i][netifaces.AF_INET][j]['broadcast'] = ''
                         j+=1
 
                 except Exception as e:
