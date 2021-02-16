@@ -73,6 +73,14 @@ class InterfaceController(object):
             return self.ifaces[iface]
         except:
             return _build_error('Interface {} not found.'.format(iface))
+
+    def addifaf(self, iface, data, af):
+        cfg.cfg['interfaces'][iface][str(af)] = [data]
+        if not cfg.is_lock():
+            cfg.lock()
+            return cfg.save()
+        else:
+            return 'CONFIG LOCK'
         
 
 class OsController(object):

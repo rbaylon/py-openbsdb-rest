@@ -45,9 +45,9 @@ class IpValidator(object):
            ret['status'] = True
            ret['interface'] = ifaceaddr
            return ret
-        except:
+        except Exception as e:
            ret['status'] = False
-           ret['interface'] = None
+           ret['interface'] = str(e)
            return ret
 
     def isIpInNetwork(self, ip, network):

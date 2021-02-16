@@ -111,7 +111,11 @@ def iface_addr(current_user, iface, af):
         return jsonify(cfgdata)
 
     if request.method == 'POST':
-        cfgdata = ic.getifaddresses(iface)
+        """
+            JSON input format:
+            {"addr": "192.168.254.100", "netmask": "255.255.255.0"}
+        """
+        cfgdata = ic.getinterface(iface)
         if 'Failed' in cfgdata:
             return jsonify(cfgdata), 400
 
@@ -123,32 +127,46 @@ def iface_addr(current_user, iface, af):
         else:
             return jsonify({'Error' : 'Request must be application/json'}), 400
 
-        app.logger.info("IM before af in AF") 
         if oldaf in AF.values():
-            app.logger.info("IM after af in AF")
             inetaddr = ic.getifaddresses(iface, af)
-            if 'Failed' in inetaddr:
-                # assume interface has no ip
-                pass
-            else:
-                # assume vip addition
-                if AF[af] == 'inet':
+            if AF[af] == 'inet' or AF[af] == 'inet6':
+                if 'Failed' in inetaddr:
+                    # assume interface has no ip
+                    iip = ipv.isIpInterface(data['addr'], data['netmask'])
+                    if iip['status']:
+                        ret = ic.addifaf(iface, data, af)
+                        if type(ret) != 'str':
+                            return redirect(url_for('iface_addr', iface=iface, af=AF[af]))
+                        else:
+                            return jsonify({'Error' : 'Failed to add address: {}'.format(ret)}), 400
+                    else:
+                        return jsonify({'Error' : '{}'.format(iip['interface'])}), 400
+                else:
+                    # assume vip addition
                     for i in inetaddr:
                         if i['netmask'] != '255.255.255.255' or i['netmask'] != '32':
                             interface = IPv4Interface('{}/{}'.format(i['addr'],i['netmask']))
                             break
 
                     iip = ipv.isIpInterface(data['addr'], '255.255.255.255')
-                    if ipv.isIpInNetwork(iip['interface'].ip, interface.network):
-                        data['netmask'] = '255.255.255.255'
-                        ret = ic.addifaddr(iface, data, af)
-                        if type(ret) != 'str':
-                            return redirect(url_for('iface_addr', iface=iface, af=AF[af]))
+                    if iip['status']:
+                        if ipv.isIpInNetwork(iip['interface'].ip, interface.network):
+                            data['netmask'] = '255.255.255.255'
+                            ret = ic.addifaddr(iface, data, af)
+                            if type(ret) != 'str':
+                                return redirect(url_for('iface_addr', iface=iface, af=AF[af]))
+                            else:
+                                return jsonify({'Error' : 'Failed to add address: {}'.format(ret)}), 400
                         else:
-                            return jsonify({'Error' : 'Failed to add address: {}'.format(ret)}), 400
+                            return jsonify({'Error' : 'Failed to add address: {}. Outside of subnet {}'.format(iip['interface'].ip, interface.network)}), 400
                     else:
-                        return jsonify({'Error' : 'Failed to add address: {}. Outside of subnet {}'.format(iip['interface'].ip, interface.network)}), 400
-                    
+                        return jsonify({'Error' : '{}'.format(iip['interface'])}), 400
+
+            elif AF[af] == 'inet6':
+                    pass
+            elif AF[af] == 'mac':
+                    pass
+
 
     if request.method == 'DELETE':
         if request.is_json:

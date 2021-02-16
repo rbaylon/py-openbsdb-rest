@@ -28,5 +28,5 @@ SIFS = [
 ]
 
 IP = {}
-IP['interface_keys'] = ['addr', 'netmask', 'af']
+IP['interface_keys'] = ['addr', 'netmask']
 
