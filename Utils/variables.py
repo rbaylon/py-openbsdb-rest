@@ -29,4 +29,5 @@ SIFS = [
 
 IP = {}
 IP['interface_keys'] = ['addr', 'netmask']
-
+IP['delete_keys'] = ['confirm_delete']
+IP['update_keys'] = ['index','value']

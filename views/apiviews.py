@@ -46,7 +46,7 @@ def token_required(f):
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
             current_user = data['username']
         except Exception as e:
-            return jsonify({'message' : str(e)}), 401
+            return jsonify({'message' : 'Token failed {}'.format(str(e))}), 401
 
         return f(current_user, *args, **kwargs)
 
@@ -82,10 +82,11 @@ def interfaces(current_user):
     ic = InterfaceController()
     return jsonify({'interfaces' : ic.getinterfaces()})
 
-@app.route('/api/interfaces/<iface>', defaults={'af': 'all'}, methods=['GET'])
-@app.route('/api/interfaces/<iface>/<af>', methods=['GET', 'PUT', 'DELETE', 'POST'])
+@app.route('/api/interfaces/<iface>', defaults={'af': 'all', 'index': '0'}, methods=['GET'])
+@app.route('/api/interfaces/<iface>/<af>', defaults={'index': 'all'}, methods=['GET', 'POST'])
+@app.route('/api/interfaces/<iface>/<af>/<string:index>', methods=['GET', 'PUT', 'DELETE'])
 @token_required
-def iface_addr(current_user, iface, af):
+def iface_addr(current_user, iface, af, index):
     if af != 'all':
         oldaf = af
         if af == 'inet':
@@ -106,7 +107,10 @@ def iface_addr(current_user, iface, af):
         if af == 'all':
             cfgdata = ic.getifaddresses(iface)
         else:
-            cfgdata = ic.getifaddresses(iface, af)
+            if index:
+                cfgdata = ic.getifaddresses(iface, af, index)
+            else:
+                cfgdata = ic.getifaddresses(iface, af)
 
         return jsonify(cfgdata)
 
@@ -169,26 +173,53 @@ def iface_addr(current_user, iface, af):
 
 
     if request.method == 'DELETE':
+        """
+            Valid input { 'confirm_delete': 'yes' }
+        """
         if request.is_json:
             data = request.get_json()
         else:
             return jsonify({'Error' : 'Request must be application/json'}), 400
 
-        ret = ic.delifaddr(iface, data, af)
+        for key in data:
+            if key not in IP['delete_keys']:
+                return jsonify({'Error' : 'Invalid delete key: {}'.format(key)}), 400
+
+        ret = ic.delifaddr(iface, data, af, index)
         if type(ret) != 'str':
             return redirect(url_for('iface_addr', iface=iface, af=AF[af]))
         else:
             return jsonify({'Error' : 'Failed to add address: {}'.format(ret)}), 400
 
     if request.method == 'PUT':
+        """
+            Valid input {"addr": "192.168.254.100", "netmask": "255.255.255.0"}
+        """
         if request.is_json:
             data = request.get_json()
         else:
-            return make_response('Error : Request must be application/json', 400)
+            return jsonify({'Error' : 'Request must be application/json'}), 400
 
-        ret = ic.modifaddr(iface, data, af)
-        if type(ret) != 'str':
-            return redirect(url_for('iface_addr', iface=iface, af=AF[af]))
+        for key in data:
+            if key not in IP['interface_keys']:
+                return jsonify({'Error' : 'Invalid update key: {}'.format(key)}), 400
+
+        iip = ipv.isIpInterface(data['addr'], data['netmask'])
+        if iip['status']:
+            if ic.isifipindex(iface, af, index):
+                inetaddr = ic.getifaddresses(iface, af, index)
+                interface = IPv4Interface('{}/{}'.format(inetaddr['addr'],inetaddr['netmask']))
+                if ipv.isIpInNetwork(iip['interface'].ip, interface.network):
+                    ret = ic.modifaddr(iface, data, af, index)
+                    if type(ret) != 'str':
+                        return redirect(url_for('iface_addr', iface=iface, af=AF[af]))
+                    else:
+                        return jsonify({'Error' : 'Failed to add address {}'.format(ret)}), 400
+                else:
+                    return jsonify({'Error' : 'Failed to update address: {}. Outside of subnet {}'.format(data['addr'], interface.network)}), 400
+            else:
+                return jsonify({'Error' : 'Invalid index {}'.format(index)}), 400
         else:
-            return make_response('Error : Failed to add address: {}'.format(ret), 400)
+            return jsonify({'Error' : '{}'.format(iip['interface'])}), 400
+
 

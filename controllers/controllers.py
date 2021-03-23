@@ -32,12 +32,29 @@ class InterfaceController(object):
     def getinterfaces(self):
         return self.ifaces
 
-    def getifaddresses(self, iface, af=None):
+    def getifaddresses(self, iface, af=None, index=None):
         if af:
-            try:
-                return self.ifaces[iface][str(af)]
-            except:
-                return _build_error('AF {} or interface {} not found.'.format(AF[af], iface))
+            if index:
+                if index != 'all':
+                    try:
+                        index=int(index)
+                    except:
+                        return _build_error('Index must be integer. Invalid {}'.format(index))
+
+                    try:
+                        return self.ifaces[iface][str(af)][index]
+                    except:
+                        return _build_error('Index {} on interface {} not found.'.format(index, iface))
+                else:
+                    try:
+                        return self.ifaces[iface][str(af)]
+                    except:
+                        return _build_error('AF {} or interface {} not found.'.format(AF[af], iface))
+            else:
+                try:
+                    return self.ifaces[iface][str(af)]
+                except:
+                    return _build_error('AF {} or interface {} not found.'.format(AF[af], iface))
         else:
             try:
                 return self.ifaces[iface]
@@ -52,16 +69,26 @@ class InterfaceController(object):
         else:
             return 'CONFIG LOCK'
 
-    def delifaddr(self, iface, data, af):
-        cfg.cfg['interfaces'][iface][str(af)].pop(data['index'])
+    def delifaddr(self, iface, data, af, index):
+        try:
+            index=int(index)
+        except:
+            return _build_error('Index must be integer. Invalid {}'.format(index))
+
+        cfg.cfg['interfaces'][iface][str(af)].pop(index)
         if not cfg.is_lock():
             cfg.lock()
             return cfg.save()
         else:
             return 'CONFIG LOCK'
 
-    def modifaddr(self, iface, data, af):
-        cfg.cfg['interfaces'][iface][str(af)][data['index']] = data['value']
+    def modifaddr(self, iface, data, af, index):
+        try:
+            index=int(index)
+        except:
+            return _build_error('Index must be integer. Invalid {}'.format(index))
+
+        cfg.cfg['interfaces'][iface][str(af)][index] = data
         if not cfg.is_lock():
             cfg.lock()
             return cfg.save()
@@ -73,6 +100,18 @@ class InterfaceController(object):
             return self.ifaces[iface]
         except:
             return _build_error('Interface {} not found.'.format(iface))
+
+    def isifipindex(self, iface, af, index):
+        try:
+            index=int(index)
+        except:
+            return _build_error('Index must be integer. Invalid {}'.format(index))
+
+        try:
+            i = cfg.cfg['interfaces'][iface][str(af)][index]
+            return True
+        except:
+            return False
 
     def addifaf(self, iface, data, af):
         cfg.cfg['interfaces'][iface][str(af)] = [data]
