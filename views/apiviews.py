@@ -133,7 +133,7 @@ def iface_addr(current_user, iface, af, index):
 
         if oldaf in AF.values():
             inetaddr = ic.getifaddresses(iface, af)
-            if AF[af] == 'inet' or AF[af] == 'inet6':
+            if AF[af] == 'inet':
                 if 'Failed' in inetaddr:
                     # assume interface has no ip
                     iip = ipv.isIpInterface(data['addr'], data['netmask'])
@@ -167,9 +167,9 @@ def iface_addr(current_user, iface, af, index):
                         return jsonify({'Error' : '{}'.format(iip['interface'])}), 400
 
             elif AF[af] == 'inet6':
-                    pass
+                return jsonify({'Message' : 'IPv6 not yet supported'}), 200
             elif AF[af] == 'mac':
-                    pass
+                return jsonify({'Message' : 'manual mac address entry not yet supported'}), 200
 
 
     if request.method == 'DELETE':
