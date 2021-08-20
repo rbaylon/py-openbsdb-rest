@@ -1,0 +1,48 @@
+{% import "bootstrap/wtf.html" as wtf %}
+{% extends 'newbase.html' %}
+{% block title %}Login Form{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col"></div>
+        <div class="col"><br>
+            {% if msg %}
+            <p class="text-danger">{{ msg }}</p>
+            {% endif %}
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row">
+        <div class="col"></div>
+        <div class="col"><h3>Login Form</h3></div>
+        <div class="col"></div>
+    </div>
+    <div class="row">
+        <div class="col"></div>
+        <div class="col">
+            {% if nexturl %}
+            <form role="form" method="POST" action="/login?next={{ nexturl }}">
+                {% else %}
+                <form role="form" method="POST" action="/login">
+                    {% endif %}
+                    <fieldset>
+                        <div class="form-group">
+                            {{ form.hidden_tag() }}
+                            {{ wtf.form_field(form.username) }}
+                        </div>
+                        <div class="form-group">
+                            {{ wtf.form_field(form.password) }}
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                {{ wtf.form_field(form.remember)}}
+                            </label>
+                        </div>
+                        <button class="btn btn-lg btn-primary btn-block" type="submit">Login</button>
+                    </fieldset>
+                </form>
+        </div>
+        <div class="col"></div>
+    </div>
+</div>
+{% endblock %}

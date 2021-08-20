@@ -16,6 +16,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 import os, netifaces, json, subprocess
 from socket import gethostname
 from Utils.variables import SIFS
+from werkzeug.security import generate_password_hash
 
 
 class CfgManager(object):
@@ -40,9 +41,11 @@ class CfgManager(object):
                     j=0
                     for ip in ifaces[i][netifaces.AF_INET]:
                         addr = ip['addr']
-                        out = subprocess.Popen(['Utils/sh/getNetmask.sh', i, addr], 
-           		    stdout=subprocess.PIPE, 
-           		    stderr=subprocess.STDOUT)
+                        out = subprocess.Popen(
+                            ['Utils/sh/getNetmask.sh', i, addr],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT
+                        )
                         stdout,stderr = out.communicate()
                         netmask = stdout.decode()
                         ifaces[i][netifaces.AF_INET][j]['netmask'] = netmask
@@ -54,6 +57,16 @@ class CfgManager(object):
 
             newcfg['interfaces'] = ifaces
             newcfg['hostname'] = gethostname()
+            default_password = generate_password_hash('123*45',
+                                                      method='pbkdf2:sha256:260000',
+                                                      salt_length=16
+                                                     )
+            newcfg['users'] = [
+                {'user': 'admin',
+                 'password': default_password,
+                 'group': 'admin',
+                 'uid': 1},
+            ]
             with open(cfg, "w") as wfile:
                 json.dump(newcfg, wfile, indent=4,sort_keys=True)
 
@@ -76,7 +89,11 @@ class CfgManager(object):
             json.dump(self.cfg, lockfile, indent=4, sort_keys=True)
 
     def unlock(self):
-        pass
+        if os.path.isfile(self.lockfile):
+            os.remove(self.lockfile)
+            return True
+
+        return False
 
     def is_lock(self):
         if os.path.isfile(self.lockfile):

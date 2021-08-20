@@ -8,7 +8,16 @@ ipaddress = "*"
 Flask = "*"
 PyJWT = "*"
 py-bsdauth = "*"
-py-openbsd-rest = {editable = true, path = "."}
+pipfile = "*"
+netifaces = "*"
+flask-bootstrap  = "*"
+flask-login = "*"
+wtforms = "*"
+flask-wtf = "*"
+flask-wtf-ext = "*"
+wtforms_components = "*"
+email_validator = "*"
+setuptools = "*"
 
 [dev-packages]
 

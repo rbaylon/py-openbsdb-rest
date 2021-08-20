@@ -120,7 +120,7 @@ class InterfaceController(object):
             return cfg.save()
         else:
             return 'CONFIG LOCK'
-        
+
 
 class OsController(object):
     def __init__(self):
@@ -129,5 +129,10 @@ class OsController(object):
     def gethostname(self):
         return self.hostname
 
-    def sethostname(self):
-        pass
+    def sethostname(self, hostname):
+        cfg.cfg['hostname'] = hostname
+        if not cfg.is_lock():
+            cfg.lock()
+            return cfg.save()
+        else:
+            return 'CONFIG LOCK'

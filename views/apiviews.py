@@ -18,12 +18,12 @@ from flask import request, redirect, url_for, jsonify, make_response
 import jwt
 import datetime
 from functools import wraps
-from bsdauth.bsdauth import UserOkay
 from Utils.variables import AF, IP
 from Utils.validators import AccountValidator, IpValidator
 import netifaces
-from controllers import InterfaceController, OsController
+from controllers import InterfaceController, OsController, UserController
 from ipaddress import IPv4Interface
+from werkzeug.security import check_password_hash
 
 av = AccountValidator()
 ipv = IpValidator()
@@ -56,23 +56,30 @@ def token_required(f):
 def apilogin():
     auth = request.authorization
     if not auth or not auth.username:
-        return make_response('Username required!', 401, {'WWW-Authenticate' : 'Basic realm="Username required!"'})
+        return make_response('Username required!', 401,
+                             {'WWW-Authenticate' : 'Basic realm="Username required!"'})
 
     if not auth.password:
-        return make_response('Password required!', 401, {'WWW-Authenticate' : 'Basic realm="Password required!"'})
+        return make_response('Password required!', 401,
+                             {'WWW-Authenticate' : 'Basic realm="Password required!"'})
 
     if av.is_username_valid(auth.username) and av.is_password_valid(auth.password):
-        credential = UserOkay(auth.username, auth.password)
-        if credential.login():
-            token = jwt.encode({'username' : auth.username, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=60)}, app.config['SECRET_KEY'])
-            return jsonify({ 'token' : token })
+        uc = UserController()
+        user = uc.getuser(username=auth.username)
+        if user:
+            if check_password_hash(user.password, auth.password):
+                token = jwt.encode({'username' : auth.username,
+                        'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=60)},
+                        app.config['SECRET_KEY'])
+                return jsonify({ 'token' : token })
 
-    return make_response('Invalid user or password!', 401, {'WWW-Authenticate' : 'Basic realm="Invalid user!"'})
+    return make_response('Invalid user or password!', 401,
+                         {'WWW-Authenticate' : 'Basic realm="Invalid user!"'})
 
 
 @app.route('/api', methods=['GET'])
 @token_required
-def home(current_user):
+def apihome(current_user):
     osc = OsController()
     return jsonify({'Hostname' : osc.gethostname()})
 

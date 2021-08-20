@@ -14,6 +14,8 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 import re, ipaddress
+from wtforms.validators import ValidationError
+
 
 class AccountValidator(object):
     def is_username_valid(self, username):
@@ -33,6 +35,31 @@ class AccountValidator(object):
             return True
         else:
             return False
+
+class FormAccountValidator(object):
+    def __init__(self, opt=None):
+        self.umessage = """
+            The login name may be 4 to 31 characters long. Login name
+            should start with a letter and consist solely of letters,
+            numbers, dashes and underscores.  The login name must
+            never begin with a dash (‘-’); also, it is strongly suggested that
+            neither uppercase characters nor dots (‘.’) be part of the name.
+            No field may contain a colon.
+        """
+        self.pwmessage = """
+        Password must be greater than or equal to 6 characters
+        long but not morethan 128 characters
+        """
+        self.opt = opt
+
+    def __call__(self, form, field):
+        av = AccountValidator()
+        if self.opt == 'password':
+            if not av.is_password_valid(field.data):
+                raise ValidationError(self.pwmessage)
+        elif self.opt == 'user':
+            if not av.is_username_valid(field.data):
+                 raise ValidationError(self.umessage)
 
 class IpValidator(object):
     def isIpInterface(self, ip, netmask):
