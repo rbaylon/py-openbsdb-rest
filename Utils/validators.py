@@ -63,7 +63,7 @@ class FormAccountValidator(object):
 
 class IpValidator(object):
     def isIpInterface(self, ip, netmask):
-        """ 
+        """
             both ip and network must be string
         """
         ret = {}
@@ -78,10 +78,21 @@ class IpValidator(object):
            return ret
 
     def isIpInNetwork(self, ip, network):
-        """ 
+        """
             ip must be an IPv4Address object
             network must be an IPv4Network object
         """
         return ip in network.hosts()
 
 
+class FormIpValidator(object):
+    def __init__(self, opt=None):
+        self.opt = opt
+
+    def __call__(self, form, field):
+        if self.opt == 'ip_interface':
+            ipv = IpValidator()
+            fields = field.data.split('/')
+            result = ipv.isIpInterface(fields[0], fields[1])
+            if not result['status']:
+                raise ValidationError(result['interface'])

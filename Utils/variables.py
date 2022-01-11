@@ -36,3 +36,36 @@ groups = [
     ('admin', 'Admin'),
     ('viewer', 'Viewer')
 ]
+
+
+pf = {
+    'action': [
+        ('pass', 'pass'),
+        ('block', 'block'),
+        ('match', 'match')
+    ],
+    'direction': [
+        ('in', 'inbound'),
+        ('out', 'outbound'),
+        ('any', 'any')
+    ],
+    'log': False,
+    'quick': False,
+    'on': ["replace with an array of combined interface and rdomain numbers"],
+    'af':[
+        ('any', 'any'),
+        ('inet', 'ipv4'),
+        ('inet6', 'ipv6')
+    ],
+    'protospec': ["replace with protocols in /etc/services"],
+    'hosts': {
+        'from': {
+            'host': 'input field',
+            'port': 'input field'
+        },
+        'to':{
+            'host': 'input field',
+            'port': 'input field'
+        }
+    }
+}

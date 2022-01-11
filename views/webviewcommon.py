@@ -1,9 +1,9 @@
 from views import app
 from werkzeug.security import check_password_hash, generate_password_hash
-from controllers import UserController
+from controllers import UserController, InterfaceController
 from forms import LoginForm, UsersForm, UsersFormEdit, UsersFormPassword
 from flask_login import login_user, logout_user, current_user, login_required, LoginManager
-from flask import render_template, request, redirect, url_for, abort
+from flask import render_template, request, redirect, url_for, abort, session
 
 
 login_manager = LoginManager()
