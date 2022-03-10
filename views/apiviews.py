@@ -52,7 +52,7 @@ def token_required(f):
 
     return decorated
 
-@app.route('/api/login')
+@app.route('/api/v1/login')
 def apilogin():
     auth = request.authorization
     if not auth or not auth.username:
@@ -77,21 +77,21 @@ def apilogin():
                          {'WWW-Authenticate' : 'Basic realm="Invalid user!"'})
 
 
-@app.route('/api', methods=['GET'])
+@app.route('/api/v1', methods=['GET'])
 @token_required
 def apihome(current_user):
     osc = OsController()
     return jsonify({'Hostname' : osc.gethostname()})
 
-@app.route('/api/interfaces', methods=['GET'])
+@app.route('/api/v1/interfaces', methods=['GET'])
 @token_required
 def interfaces(current_user):
     ic = InterfaceController()
     return jsonify({'interfaces' : ic.getinterfaces()})
 
-@app.route('/api/interfaces/<iface>', defaults={'af': 'all', 'index': '0'}, methods=['GET'])
-@app.route('/api/interfaces/<iface>/<af>', defaults={'index': 'all'}, methods=['GET', 'POST'])
-@app.route('/api/interfaces/<iface>/<af>/<string:index>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/api/v1/interfaces/<iface>', defaults={'af': 'all', 'index': '0'}, methods=['GET'])
+@app.route('/api/v1/interfaces/<iface>/<af>', defaults={'index': 'all'}, methods=['GET', 'POST'])
+@app.route('/api/v1/interfaces/<iface>/<af>/<string:index>', methods=['GET', 'PUT', 'DELETE'])
 @token_required
 def iface_addr(current_user, iface, af, index):
     if af != 'all':
