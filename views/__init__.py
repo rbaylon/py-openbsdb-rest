@@ -11,4 +11,4 @@ app.register_error_handler(404, page_not_found)
 app.register_error_handler(401, unauthorized)
 Bootstrap(app)
 
-from views import apiviews, webviewcommon
+from views import apicommon, webviewcommon, apipf
